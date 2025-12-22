@@ -87,7 +87,7 @@ oc debug -n default -- curl -m 2 -s http://$POD_IP_DEFAULT_NETWORK:8080
 Only as an example, we check the setup with a custom HAProxy ingress controller installed with a Helm Chart. 
 
 ```bash
-# Be located at the default-ingress folder
+# Be located at the isolated folder
 oc apply -f 1_cudn.yaml
 
 oc apply -f 2_namespaces.yaml
