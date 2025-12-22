@@ -19,7 +19,7 @@ Once installed, we can check if the app is being served with TLS edge terminatio
 ```bash
 curl -s -m 1 \
   https://$(oc get route \
-      -n net-demo-ingress hello-openshift \
+      -n net-demo-ingress hello \
       -ojsonpath='{.spec.host}')
 ```
 
