@@ -135,3 +135,73 @@ Served from an isolated Cluster User Defined Network.
 Removing debug pod ...
 Temporary namespace openshift-debug-gwrd8 was removed.
 ```
+
+## TLS termination
+Create a file `ca.crt`, which is the signing certificate from the `isolated/ingressCA.crt` folder in a debug pod and add a line in the `/etc/hosts` for the `hello.apps.meloinvento.com` host pointing to the HAProxy Load Balancer service. 
+
+```bash
+curl --cacert ./ca.crt -v https://hello.apps.meloinvento.com
+```
+
+EXAMPE: 
+```
+sh-5.1# curl --cacert ./ca.crt -v https://hello.apps.meloinvento.com
+*   Trying 192.168.126.20:443...
+* Connected to hello.apps.meloinvento.com (192.168.126.20) port 443 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+*  CAfile: ./ca.crt
+* TLSv1.0 (OUT), TLS header, Certificate Status (22):
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.2 (IN), TLS header, Finished (20):
+* TLSv1.2 (IN), TLS header, Unknown (23):
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+* TLSv1.2 (OUT), TLS header, Finished (20):
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.2 (OUT), TLS header, Unknown (23):
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: C=ES; ST=Caribe; L=Macondo; O=ACME; OU=CSA; CN=CSA Demo
+*  start date: Dec 22 13:21:02 2025 GMT
+*  expire date: Mar 26 13:21:02 2028 GMT
+*  subjectAltName: host "hello.apps.meloinvento.com" matched cert's "*.apps.meloinvento.com"
+*  issuer: C=ES; ST=Caribe; L=Macondo; O=ACME; OU=CSA; CN=PrivateCA for CSA Demos
+*  SSL certificate verify ok.
+* Using HTTP2, server supports multi-use
+* Connection state changed (HTTP/2 confirmed)
+* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
+* TLSv1.2 (OUT), TLS header, Unknown (23):
+* TLSv1.2 (OUT), TLS header, Unknown (23):
+* TLSv1.2 (OUT), TLS header, Unknown (23):
+* Using Stream ID: 1 (easy handle 0xaaaacb05d2a0)
+* TLSv1.2 (OUT), TLS header, Unknown (23):
+> GET / HTTP/2
+> Host: hello.apps.meloinvento.com
+> user-agent: curl/7.76.1
+> accept: */*
+>
+* TLSv1.2 (IN), TLS header, Unknown (23):
+* TLSv1.2 (OUT), TLS header, Unknown (23):
+* TLSv1.2 (IN), TLS header, Unknown (23):
+< HTTP/2 200
+< date: Mon, 22 Dec 2025 17:51:07 GMT
+< content-length: 54
+< content-type: text/plain; charset=utf-8
+< alt-svc: h3=":443";ma=60;
+<
+Served from an isolated Cluster User Defined Network.
+* Connection #0 to host hello.apps.meloinvento.com left intact
+```
+
+If you don't include the load balancer ip in the /etc/hosts folder, you can opt for the curl sentence: 
+
+```bash
+curl --resolve "hello.apps.meloinvento.com:443:<<<LOAD BALANCER IP>>>" --cacert ./ca.crt  -v https://hello.apps.meloinvento.com
+```

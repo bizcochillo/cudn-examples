@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-ssl-config
+  namespace: net-demo-isolated
+data:
+  # The UBI image reads configs from /etc/nginx/conf.d/*.conf by default.
+  # We name this 'ssl.conf' to ensure it's included.
+  ssl.conf: |
+    server {
+        listen       8443 ssl;
+        server_name  localhost;
+
+        ssl_certificate     /etc/nginx/certs/tls.crt;
+        ssl_certificate_key /etc/nginx/certs/tls.key;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ssl
+  namespace: net-demo-isolated
+  labels:
+    app: nginx-ssl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ssl
+  template:
+    metadata:
+      labels:
+        app: nginx-ssl
+    spec:
+      containers:
+        - name: nginx
+          image: registry.access.redhat.com/ubi9/nginx-122:latest
+          command: ["nginx", "-g", "daemon off;"]
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            # Mount the config explicitly as a file
+            - name: nginx-config
+              mountPath: /opt/app-root/etc/nginx.d/ssl.conf
+              subPath: ssl.conf
+            - name: ssl-certs
+              mountPath: /etc/nginx/certs
+              readOnly: true
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-ssl-config
+            items:
+              - key: ssl.conf
+                path: ssl.conf
+        - name: ssl-certs
+          secret:
+            secretName: tls-passthrough-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ssl-svc
+  namespace: net-demo-isolated
+spec:
+  selector:
+    app: nginx-ssl
+  ports:
+    - protocol: TCP
+      port: 443          
+      targetPort: 8443   
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ssl-svc-cname
+  namespace: net-demo-isolated
+spec:
+  type: ExternalName
+  externalName: nginx-ssl-svc.net-demo-isolated.svc.cluster.local
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 8443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ssl-ingress
+  namespace: net-demo-isolated
+  annotations:
+    haproxy.org/ssl-passthrough: "true"
+spec:
+  ingressClassName: haproxy
+  tls:
+    - hosts:
+      - meloinvento.meloinvento-isolated.com
+  rules:
+    - host: passthrough.meloinvento-isolated.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-ssl-svc-cname
+                port:
+                  number: 443
