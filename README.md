@@ -119,32 +119,68 @@ Now, we can check from a random node, that we are able to reach the ingress cont
 LOAD_BALANCER_IP=$(oc get svc \
         -n net-demo-isolated haproxy-ingress \
         -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
-
-RANDOM_NODE_INDEX=$(( RANDOM % 6 ))
-TEST_NODE=$(oc get node \
-        -ojsonpath={.items\[$RANDOM_NODE\].metadata.name})
-
 # Check how to access the cluster 
-oc debug node/$TEST_NODE \
-        -- curl -s -m 2 -H "Host: ingress.hello.com" $LOAD_BALANCER_IP
+oc debug -- curl -s -m 2 -H "Host: ingress.hello.com" $LOAD_BALANCER_IP
 ```
 
 The latter will show the served content from the Ingress Controller
 
 ```
-(base) ➜  isolated oc debug node/$TEST_NODE \
-        -- curl -s -m 2 -H "Host: ingress.hello.com" $LOAD_BALANCER_IP
-Temporary namespace openshift-debug-gwrd8 is created for debugging node...
-Starting pod/saa-obs-5tvt7-worker-germanywestcentral1-kkfsh-debug-cwxrl ...
-To use host binaries, run `chroot /host`. Instead, if you need to access host namespaces, run `nsenter -a -t 1`.
+oc debug -- curl -s -m 2 -H "Host: ingress.hello.com" $LOAD_BALANCER_IP
+Starting pod/image-debug-qcp6q ...
 Served from an isolated Cluster User Defined Network.
 
 Removing debug pod ...
-Temporary namespace openshift-debug-gwrd8 was removed.
 ```
 
 ## TLS termination
-Create a file `ca.crt`, which is the signing certificate from the `isolated/ingressCA.crt` folder in a debug pod and add a line in the `/etc/hosts` for the `hello.apps.meloinvento.com` host pointing to the HAProxy Load Balancer service. 
+Create an ingress resource which will make use of the standard certificate
+```bash
+oc apply -f 6_2_ingress-tls-edge.yaml
+```
+
+In a debug pod, 
+```bash
+oc debug
+```
+
+create the `ca.crt` file containing the CA used to create the ingress controller certificate
+
+```bash
+cat <<EOF > ca.crt
+-----BEGIN CERTIFICATE-----
+MIIDvzCCAqegAwIBAgIUQIXuftpav/IDCpLjJ70Dhz3jlLQwDQYJKoZIhvcNAQEL
+BQAwbzELMAkGA1UEBhMCRVMxDzANBgNVBAgMBkNhcmliZTEQMA4GA1UEBwwHTWFj
+b25kbzENMAsGA1UECgwEQUNNRTEMMAoGA1UECwwDQ1NBMSAwHgYDVQQDDBdQcml2
+YXRlQ0EgZm9yIENTQSBEZW1vczAeFw0yNDA5MTMxNTU1MTBaFw0yOTA5MTIxNTU1
+MTBaMG8xCzAJBgNVBAYTAkVTMQ8wDQYDVQQIDAZDYXJpYmUxEDAOBgNVBAcMB01h
+Y29uZG8xDTALBgNVBAoMBEFDTUUxDDAKBgNVBAsMA0NTQTEgMB4GA1UEAwwXUHJp
+dmF0ZUNBIGZvciBDU0EgRGVtb3MwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+AoIBAQC0te0JhCxqGAbp7loR9uAOu9G1euwvokuWde0tNaYBQv5FDOUsNo05NHTX
+6ppA7J4b2p4QllyDxFs5Q9pot13C2n/PwgQK7T0MCPlT5U+Ao+YzEqx+6uCDjb4a
+q+hMVDWVoD7UihUHYaDYg525fbCSCBzVAOG2b0H4wJ+VBpNTLiHZPi3sFevRykDD
+rToZPj39mVQA8D4dYe8LIKw5FxUKyT3eivRCxDLxtgABFKZWbMPjRAmK5Pd81Gdb
+l+eAL35RHzfK2mrwIfIUyEhSSKKzbDOQuBl7GKFPvL5epIX5TeMKSeIgVbn5BN9M
+gm8orT4QYchd2ik9cAsdWog/Z5oJAgMBAAGjUzBRMB0GA1UdDgQWBBTs+voWWfDh
+z18pmRmVkvbgvK+wOTAfBgNVHSMEGDAWgBTs+voWWfDhz18pmRmVkvbgvK+wOTAP
+BgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQB88ukRxB9vNu+9fvDl
+nUadzG0lLRhlKh114ktx7EX+DjZ2izmncY6P8LZVSNnikoJ54fB1MXyf8CmJ8Eqz
+M/2aMav6O0Z2RMWdimU13ZYq4b9i838FwPd9JRjTRU3587BL5pnhdWkFGSPiexxX
+diih42JkNwvjv37oUdpxLQzE1tvak+YZX/RWPNtB0C92PDljBeih8CrJEJOafSmf
+cbW1XUe4as5t+lZZpiHijHDFTJManAjQPQ396e01RK/pA2G2PV+KNlVtl/7VkAaR
+x9OIoMoG/+uUJ+Px/pmxk8SWVHVqPwa3BR8KTkK0ZLbKkgQGxK12DPNeJRNCZl2Y
+DREo
+-----END CERTIFICATE-----
+EOF
+```
+
+Still in the debug pod, modify the `/etc/hosts` to assign the haproxy-ingress Load Balancer service External IP to the `hello.apps.meloinvento.com` name.
+
+```bash
+echo "__HERE_THE_LOAD_BALANCER_IP__ hello.apps.meloinvento.com"  >> /etc/hosts
+```
+
+Check that we can reach the application with HTTPS:
 
 ```bash
 curl --cacert ./ca.crt -v https://hello.apps.meloinvento.com

@@ -6,7 +6,7 @@ controller:
   serviceAccount:
     create: false
     name: haproxy-ingress
-  replicaCount: 2
+  replicaCount: 1
   securityContext:
     runAsUser: 0
     runAsGroup: 0
@@ -28,6 +28,9 @@ controller:
     mountPath: /etc/haproxy/maps
   config:
     ssl-certificate: net-demo-isolated/tls-certificate-secret
-  resources: {}
+  resources: 
+    requests: 
+      cpu: 50m
+      memory: 10Mi
 defaultBackend:
   enabled: true
