@@ -7,7 +7,7 @@ For installing the example, please create the resources one by one, as the CUDN 
 # Be located at the default-ingress folder
 oc apply -f 1_cudn.yaml
 
-oc apply -f 2_namespaces.yaml
+oc apply -f 2_namespace.yaml
 
 oc apply -f 3_netpol.yaml
 
@@ -90,7 +90,7 @@ Only as an example, we check the setup with a custom HAProxy ingress controller 
 # Be located at the isolated folder
 oc apply -f 1_cudn.yaml
 
-oc apply -f 2_namespaces.yaml
+oc apply -f 2_namespace.yaml
 
 oc apply -f 3_app.yaml
 ```
