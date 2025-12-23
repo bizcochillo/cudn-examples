@@ -93,24 +93,31 @@ oc apply -f 1_cudn.yaml
 oc apply -f 2_namespaces.yaml
 
 oc apply -f 3_app.yaml
+```
+Once we have the apps and their services, we need to setup the prerequisites for the Ingress Controller. We create the service account the IC will run under and the secret to be given as default certificate when SSL termination is required. 
 
+```bash
+# Creation of the SA and their privileged SCC assignation
 oc apply -f 4_sa.yaml
+
+# Creation of the certificates for the default IC and the pt workload.
+oc apply -f ./cert-ingress/cert.yaml
+oc apply -f ./cert-passthrough-workload/cert.yaml
 
 helm repo add haproxytech https://haproxytech.github.io/helm-charts
 helm repo update
 helm install haproxy-ingress haproxytech/kubernetes-ingress \
      -n net-demo-isolated \
-     -f ./5_values.yaml \
-     -f ./5_values-aro.yaml
+     -f ./5_values.yaml
 
 # We create the ingress object via the external name
-oc apply -f 6_ingress.yaml
+oc apply -f 6_1_ingress-plain.yaml
 ```
 Now, we can check from a random node, that we are able to reach the ingress controller via the Load Balancer IP. In this example, this has been tested on ARO, so we need to retrieve the Load Balancer IP and we check from a Random node
 
 ```bash
 LOAD_BALANCER_IP=$(oc get svc \
-        -n net-demo-isolated haproxy-ingress-kubernetes-ingress \
+        -n net-demo-isolated haproxy-ingress \
         -ojsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 RANDOM_NODE_INDEX=$(( RANDOM % 6 ))
