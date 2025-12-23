@@ -104,9 +104,6 @@ metadata:
     haproxy.org/ssl-passthrough: "true"
 spec:
   ingressClassName: haproxy
-  tls:
-    - hosts:
-      - meloinvento.meloinvento-isolated.com
   rules:
     - host: passthrough.meloinvento-isolated.com
       http:
