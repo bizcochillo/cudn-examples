@@ -28,5 +28,6 @@ controller:
     mountPath: /etc/haproxy/maps
   config:
     ssl-certificate: net-demo-isolated/tls-certificate-secret
+  resources: {}
 defaultBackend:
   enabled: true
