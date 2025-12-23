@@ -5,5 +5,5 @@ data:
 kind: Secret
 metadata:
   namespace: net-demo-isolated
-  name: tls-certificate-secret
+  name: tls-ingress-secret
 type: kubernetes.io/tls

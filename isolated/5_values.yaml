@@ -1,3 +1,4 @@
+fullnameOverride: haproxy-ingress
 serviceAccount:
   create: false
   name: haproxy-ingress
@@ -25,5 +26,7 @@ controller:
   extraVolumeMounts:
   - name: haproxymaps
     mountPath: /etc/haproxy/maps
+  config:
+    ssl-certificate: net-demo-isolated/tls-certificate-secret
 defaultBackend:
   enabled: true

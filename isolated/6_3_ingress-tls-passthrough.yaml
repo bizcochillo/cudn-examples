@@ -4,8 +4,7 @@ metadata:
   name: nginx-ssl-config
   namespace: net-demo-isolated
 data:
-  # The UBI image reads configs from /etc/nginx/conf.d/*.conf by default.
-  # We name this 'ssl.conf' to ensure it's included.
+  index.html: "This is a NGINX server for the SSL example."
   ssl.conf: |
     server {
         listen       8443 ssl;
@@ -48,6 +47,12 @@ spec:
             - name: nginx-config
               mountPath: /opt/app-root/etc/nginx.d/ssl.conf
               subPath: ssl.conf
+            - name: nginx-config
+              mountPath: /opt/app-root/src/index.html
+              subPath: index.html
+            - name: nginx-config
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
             - name: ssl-certs
               mountPath: /etc/nginx/certs
               readOnly: true
@@ -58,6 +63,8 @@ spec:
             items:
               - key: ssl.conf
                 path: ssl.conf
+              - key: index.html
+                path: index.html
         - name: ssl-certs
           secret:
             secretName: tls-passthrough-secret
