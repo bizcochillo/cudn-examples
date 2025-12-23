@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: haproxy
   tls: 
-  - secretName: tls-certificate-secret
+  - secretName: tls-ingress-secret
     hosts: 
     - hello.apps.meloinvento.com
   rules:

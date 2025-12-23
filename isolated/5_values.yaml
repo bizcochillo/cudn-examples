@@ -19,6 +19,7 @@ controller:
       http: 8080
       https: 8443
   extraArgs:
+    - --ssl-passthrough
     - --maps-dir=/etc/haproxy/maps
   extraVolumes:
   - name: haproxymaps
@@ -27,7 +28,7 @@ controller:
   - name: haproxymaps
     mountPath: /etc/haproxy/maps
   config:
-    ssl-certificate: net-demo-isolated/tls-certificate-secret
+    ssl-certificate: net-demo-isolated/tls-ingress-secret
   resources: 
     requests: 
       cpu: 50m
